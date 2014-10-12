@@ -26,8 +26,9 @@ def main():
 
     # open devmem
     try:
-        with os.open("/dev/mem", os.O_RDWR | os.O_SYNC) as f:
-            mem = mmap.mmap(f, mmap.PAGESIZE, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ, offset=GPIO_REGS)
+        f = os.open("/dev/mem", os.O_RDWR | os.O_SYNC)
+        mem = mmap.mmap(f, mmap.PAGESIZE, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ, offset=GPIO_REGS)
+        os.close(f)
     except OSError as e:
         if e.errno == 13: # permission failure
             raise RuntimeError("Permission denied openening /dev/mem. Are you running as root?")
