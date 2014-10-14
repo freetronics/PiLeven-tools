@@ -13,20 +13,24 @@ if [ `id -u` -ne 0 ]; then
     exit 1
 fi
 
-if [ -e /boot/cmdline.txt ]; then
+if grep -q ttyAMA0 /boot/cmdline.txt 2>/dev/null; then
     echo "Backing up /boot/cmdline.txt as /boot/cmdline.txt.prepilv..."
     cp /boot/cmdline.txt /boot/cmdline.txt.prepilv
     echo "Disabling Linux console output to serial port..."
-    sed -i s/console=ttyAMA0/console=tty0/ /boot/cmdline.txt
-else
+    # matches console=ttyAMA0,12345 or kgdboc=ttyAMA0,12345
+    sed -i 's/[a-z]*=ttyAMA0[0-9,]* *//g' /boot/cmdline.txt
+elif ! [ -e /boot/cmdline.txt ]; then
     echo "WARNING: /boot/cmdline.txt not found. You will need to manually remove any console=ttyAMA0 line from kernel boot arguments!"
 fi
 
-if [ -e /etc/inittab ]; then
+if grep ttyAMA0 /etc/inittab 2>/dev/null; then
     echo "Disabling serial port login console in /etc/inittab..."
     sed -i 's/.\+ttyAMA0/#\0/' /etc/inittab
+elif [ -x /usr/bin/systemctl ]; then
+    echo "Disabling serial port console..."
+    systemctl disable serial-getty@ttyAMA0.service # silent if doesn't exist
 else
-    echo "WARNING: /etc/inittab not found. You will need to disable the ttyAMA0 console manually."
+    echo "WARNING: Console mechanism not found. You will need to disable the ttyAMA0 console manually."
 fi
 
 if [ -d /etc/udev/rules.d ]; then
@@ -44,4 +48,4 @@ fi
 
 echo "Installing /usr/local/sbin/set_pin_alt.py..."
 cat > /usr/local/sbin/set_pin_alt.py <<EOF
-#!/usr/bin/env python
+#!/usr/bin/env python2
