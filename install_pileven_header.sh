@@ -2,7 +2,7 @@
 #
 # Installer script for Freetronics PiLeven support on Raspberry Pi.
 #
-# This installer does 4 things:
+# This installer does 3 things:
 # * Disables Linux console serial port output
 # * Installs the tool /usr/local/set_pin_alt.py to allow setting alternative GPIO functions.
 # * Automatically sets up the built-in serial port at startup so it will automatically work
