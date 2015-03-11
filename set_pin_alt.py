@@ -19,15 +19,15 @@ Licensed under the New BSD License as described in the file LICENSE.
 Originally written by Angus Gratton (my fault, everyone!).
 """
 
-GPIO_REGS= 0x20200000
-
 def main():
     args = arguments.parse_args()
+
+    gpio_base = get_gpio_base()
 
     # open devmem
     try:
         f = os.open("/dev/mem", os.O_RDWR | os.O_SYNC)
-        mem = mmap.mmap(f, mmap.PAGESIZE, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ, offset=GPIO_REGS)
+        mem = mmap.mmap(f, mmap.PAGESIZE, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ, offset=gpio_base)
         os.close(f)
     except OSError as e:
         if e.errno == 13: # permission failure
@@ -51,6 +51,25 @@ def main():
         gpio.set_fsel(fsel)
     mem.close()
 
+def get_gpio_base():
+    """
+    Return the base address of the GPIO register block for this
+    SoC
+    """
+    GPIO_REGS_BCM2708 = 0x20200000
+    GPIO_REGS_BCM2709 = 0x3F200000
+    try:
+        with open("/proc/cpuinfo", "r") as f:
+            cpuinfo = f.read()
+    except OSError as e:
+        raise RuntimeError("Unexpected error opening /proc/cpuinfo: %s" % e)
+
+    if "BCM2709" in cpuinfo:
+        return GPIO_REGS_BCM2709
+    elif "BCM2708" in cpuinfo:
+        return GPIO_REGS_BCM2708
+    else:
+        raise RuntimeError("According to /proc/cpuinfo it doesn't seem that set_pin_alt.py is running on a Raspberry Pi (BCM2708 or BCM2709).\n\nIf you think this is a bug, please email support@freetronics.com")
 
 def arg_to_fsel(arg):
     """
