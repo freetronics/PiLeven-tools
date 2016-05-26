@@ -60,12 +60,13 @@ echo "***"
 if [ -d /etc/udev/rules.d ]; then
     echo "Installing new udev rule /etc/udev/rules.d/99-PiLeven-ttyAMA0-config.rules"
     cat > /etc/udev/rules.d/99-PiLeven-ttyAMA0-config.rules <<EOF
-# /dev/ttyAMA0 needs two things (apart from disabled console) to work with Freetronics PiLeven
+# /dev/ttyAMA0 needs three things (apart from disabled console) to work with Freetronics PiLeven
 #
 # - RTS pin on GPIO 17 needs to be enabled, this acts as auto-reset for Arduino upload.
 # - A symlink as /dev/ttyS99 is created as the Arduino IDE doesn't see /dev/ttyAMA0 as a valid serial port
+# - Set group to 'dialout' if a dialout group exists on this system.
 #
-KERNEL=="ttyAMA0", ACTION=="add", SYMLINK+="ttyS99", RUN+="/usr/bin/gpio -g mode 17 alt3", RUN+="/usr/bin/gpio -g mode 14 alt0", RUN+="/usr/bin/gpio -g mode 15 alt0"
+KERNEL=="ttyAMA0", ACTION=="add", SYMLINK+="ttyS99", RUN+="/usr/bin/gpio -g mode 17 alt3", RUN+="/usr/bin/gpio -g mode 14 alt0", RUN+="/usr/bin/gpio -g mode 15 alt0", GROUP="dialout"
 EOF
 else
     echo "WARNING: no directory /etc/udev/rules.d. Cannot installed the PiLeven udev rule."
